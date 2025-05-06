@@ -1,0 +1,227 @@
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Scanner;
+
+public class CardGame {
+    public static void main(String[] args){
+        Scanner sc = new Scanner(System.in);
+
+        Dealer d = new Dealer();
+        int round = 1;
+
+        System.out.println("♤◇♡♧ 포커 게임을 시작합니다.♧♡◇♤");
+        System.out.println();
+        System.out.println("※ 본 게임의 룰은 아래와 같습니다. ※");
+        System.out.println("각각 받은 카드 5장을 받고 한 장 마다 무늬에 맞는 배점과 알파벳 또는 숫자의 배점을 합하여 그 총 합이 가장 높은 사람이 우승합니다.");
+        System.out.println();
+        System.out.println("사용자를 등록해주세요.");
+
+        d.regist();
+
+
+        while (round < 101) {
+            System.out.println("♡♡♡ "+round+"번 째 라운드 ♡♡♡"+"\n");
+
+            d.maxCard = 0;
+            d.setDeck();
+
+        for(int i=0; i<d.players.size(); i++) {     //객체 수만큼 반복
+            Player go = d.players.get(i);   //참조변수 객체 대변
+            go.gameSco = 0;
+
+            d.deckCard(go);
+
+            System.out.println((i + 1) + "번째 사용자  " + d.players.get(i).nickNm);
+            System.out.println("↓ 카드 확인 ↓");
+            System.out.println(Arrays.toString(d.players.get(i).pCard));
+
+            d.calcShape(go);
+            System.out.println("무늬 합산 점수 " + go.gameSco);
+
+            d.calcNum(go);
+            System.out.println("무늬+숫자 합산 점수 " + go.gameSco);
+
+            d.maxSco(go);
+            System.out.println();
+            }//  유저에게 카드 배분 for문
+
+            d.compareCard();
+            System.out.println();
+
+            round++;
+        }// 100번 반복문
+
+        System.out.println("♤◇♡♧ 모든 게임이 종료되었습니다. ♧♡◇♤");
+        System.out.println("☆☆ 게임 결과를 발표합니다. ☆☆");
+        d.players.sort((p1, p2) -> p2.winCount - p1.winCount);
+        for (Player p : d.players) {
+            System.out.println(p.nickNm + ": " + p.winCount);
+        }
+    }// main
+}// class CardGame
+class Dealer extends Card{
+    ArrayList<Player> players = new ArrayList<>();
+    void deckCard(Player p) {        //플레이어에게 카드 5장씩 나눠주기
+            for(int i=0; i<p.pCard.length; i++) {
+                int ranNum;
+
+                while (true) {
+                    ranNum = (int) (Math.random() * 52);
+                    if (!deck[ranNum].equals("")) {                        // 배분 가능한 카드일 때 (유효한 카드)
+                        String dekShape = deck[ranNum].split(",")[0];
+                        String deckNum = deck[ranNum].split(",")[1];
+                        p.pCard[i] = dekShape + "," + deckNum;
+                        deck[ranNum] = "";
+                        break;
+                    } //유효한 카드이므로 빠져나오기. 유효하지 않으면 다시 랜덤숫자 뽑음.
+                }// while
+        }// for
+    }// deckCard
+
+    int calcShape(Player p) {        // 각 플레이어의 카드 무늬 한장씩 비교
+        for (int i = 0; i < p.pCard.length; i++) {
+
+            String shaStr = p.pCard[i].split(",")[0];
+
+            if (shaStr.equals("♤")) {
+                p.gameSco += 4;
+            }else if (shaStr.equals("◇")) {
+                p.gameSco += 3;
+            } else if (shaStr.equals("♡")) {
+                p.gameSco += 2;
+            } else if(shaStr.equals("♧")){
+                p.gameSco += 1;
+            }
+            }// for i
+        return p.gameSco;
+        }// calcShape
+
+    int calcNum(Player p){       // 각 플레이어의 카드 숫자 한장씩 비교
+            for (int i = 0; i < p.pCard.length; i++) {
+                String obj = p.pCard[i].split(",")[1];      //문자열 변수에 ,이후의 문자를 대입
+                if(!obj.matches("[0-9]+")){                 //숫자열이 아니면
+                    if (obj.equals("A")) {
+                        p.gameSco += 14;
+                    } else if (obj.equals("K")) {
+                        p.gameSco += 13;
+                    } else if (obj.equals("J")) {
+                        p.gameSco += 12;
+                    } else if (obj.equals("Q")) {
+                        p.gameSco += 11;
+                    }
+                }else{                                          //숫자열이라면 숫자로 변환
+                    int tmp = Integer.parseInt(obj);
+                    p.gameSco += (tmp);
+                }
+        }
+        return p.gameSco;
+    }// calcNum
+
+    void regist(){       // 사용자 등록
+        Scanner sc = new Scanner(System.in);
+        boolean innerEixt = true;
+        String user;
+
+            while (innerEixt) {
+                System.out.println("▷ 등록할 이름을 입력해주세요. (20자 내외)");
+                user = sc.nextLine();
+                System.out.println();
+
+                if (user.length() <= 20) {
+                    Player player = new Player(user);
+                    System.out.println("=== 이름이 성공적으로 등록되었습니다. ===");
+                    players.add(player);
+                    for(int i=0; i<players.size(); i++){
+                        System.out.println((i+1)+"."+players.get(i).nickNm+" ");
+                    }
+                    System.out.println();
+                    System.out.println("▷ 사용자를 추가 등록 하시겠습니까?");   //  사용자 추가 등록
+                        System.out.println("1.네    2.아니오");
+                        int put = sc.nextInt();
+                        sc.nextLine();
+
+                        if (put == 2) {                                 // 추가 안등록
+                            System.out.println("§§ 사용자 등록을 종료합니다. §§");
+                            System.out.println();
+                            innerEixt = false;  // 등록 최종 종료
+                        } else if (put == 1) {                          // 추가 등록
+                            if(players.size()==4){
+                                System.out.println("§§ 현재 최대 인원이므로 더이상 등록할 수 없습니다. §§");
+                                System.out.println();
+                                break;                      //인원 초과로 추가등록 실패
+                            }
+                        }
+                }
+                else System.out.println("이름은 20자를 초과할 수 없습니다. 당시 등록해주세요.");
+            }// while
+    }// regist
+
+    void maxSco(Player p) {      // 플레이어들의 카드 합산값을 비교하여 최대값인 플레이어 찾기
+//        int maxnum = 0;         // 최대값 찾기
+        for (int i = 0; i < players.size(); i++) {
+            if (maxCard < players.get(i).gameSco) {
+                maxCard = players.get(i).gameSco;
+            }
+        }
+        System.out.println("최대값 : " + maxCard);
+    }
+    void compareCard(){             // 우승 횟수. 패배 횟수 증가하기
+        for(int k=0; k<players.size(); k++) {
+            if(maxCard == players.get(k).gameSco){
+                players.get(k).winCount+=1;
+                players.get(k).gameMoney+=500;
+
+            }else players.get(k).loseCount+=1;
+
+        }
+        for(int o=0; o<players.size(); o++){
+            Player oo  = players.get(o);
+            System.out.println("플레이어"+(o+1)+". "+oo.nickNm+"의 포인트"+oo.gameMoney+" 승리 횟수"+oo.winCount+" 패배 횟수"+oo.loseCount);
+        }
+
+    }// maxSco
+
+}//class Dealer
+
+class Card{
+    String[] deck = new String[52];
+    String cShape="";
+    String cNum="";
+    int maxCard = 0;
+
+    Card(){}
+    void setDeck(){     //카드 52개 세팅
+        deck = new String[52];
+
+        String[] shapes = {"♤", "◇", "♡", "♧"};
+        String[] numbers = {"K", "A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "Q", "J"};
+        int index = 0;
+
+        for (String cShape : shapes) {
+            for (String cNum : numbers) {
+                deck[index] = cShape + "," + cNum;
+                this.cShape = cShape;
+                this.cNum = cNum;
+                index++;
+            }
+        }
+//        System.out.println("↓ 카드 잘 만들어졌나 확인 ↓");
+//        System.out.println(Arrays.toString(deck));
+        }// setDeck
+}// class Card
+
+class Player{
+    int gameMoney = 10000;
+    String nickNm;    //최대20자
+    int gameSco = 0;    //카드를 평가한 점수. < 1라운드 끝나면 초기화 >
+    int winCount = 0;   //5라운드가 끝나고 1등에게 +1
+    int loseCount = 0;  //5라운드가 끝나고 1등을 제외한 플레이어들은 +1
+
+    Player(){}
+    Player(String nickNm){
+        this.nickNm = nickNm;
+    }
+    String[] pCard = new String[5];     //딜러한테 받는 랜덤 카드 5장
+
+}//class Player
